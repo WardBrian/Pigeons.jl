@@ -117,6 +117,7 @@ function auto_mala!(
 
     n_refresh = explorer.base_n_refresh * ceil(Int, dim^explorer.exponent_n_refresh)
     for i in 1:n_refresh
+        # println(state) # debug
         start_state .= state
         randn!(rng, momentum)
         init_joint_log = log_joint(target_log_potential, state, momentum)

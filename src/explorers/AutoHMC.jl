@@ -91,7 +91,8 @@ function _extract_commons_and_run!(explorer::AutoHMC, replica, shared, log_poten
         # We only do this on the first scan of each round.
         # Since the number of iterations per round increases,
         # the fraction of time we do this decreases to zero.
-        !is_first_scan_of_round
+        # !is_first_scan_of_round # debug
+        true # debug
     )
 end
 
@@ -108,7 +109,7 @@ function auto_hmc!(
 
     momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim)
     start_momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim) # incremented between leapfrog steps
-    first_start_momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim) # incremented between leapfrog steps
+    first_start_momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim) # stays at 0th leapfrog step 
     diag_precond = get_buffer(recorders.buffers, :am_ones_buffer, dim)
     build_preconditioner!(diag_precond, explorer.preconditioner, rng, explorer.estimated_target_std_deviations)
     start_state = get_buffer(recorders.buffers, :am_state_buffer, dim) # incremented between leapfrog steps
@@ -117,6 +118,7 @@ function auto_hmc!(
 
     n_refresh = explorer.base_n_refresh * ceil(Int, dim^explorer.exponent_n_refresh)
     for i in 1:n_refresh # each time do `n_leapfrog` steps
+        # println(state) # debug
         randn!(rng, momentum) # refresh momentum
         first_start_momentum .= momentum
         init_joint_log = log_joint(target_log_potential, state, momentum)
