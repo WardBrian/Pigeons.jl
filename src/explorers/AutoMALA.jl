@@ -94,7 +94,8 @@ function _extract_commons_and_run!(explorer::AutoMALA, replica, shared, log_pote
         # We only do this on the first scan of each round.
         # Since the number of iterations per round increases,
         # the fraction of time we do this decreases to zero.
-        !is_first_scan_of_round
+        # !is_first_scan_of_round # debug
+        true # debug
     )
 end
 

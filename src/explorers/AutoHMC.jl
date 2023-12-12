@@ -7,8 +7,7 @@ AutoHMC is essentially `n_leapfrog` applications of `AutoMALA`, where `n_leapfro
 of leapfrog steps. See [`AutoMALA`](@ref) for more information. 
 The difference is that *between* leapfrog steps, the momentum is *not* refreshed and
 the sign of the momentum is *not* flipped at any point. 
-To prove that the algorithm is pi-invariant, one uses skew detailed balance 
-instead of detailed balance (reversible). 
+To prove that the algorithm is pi-invariant, one uses skew detailed balance instead of detailed balance. 
 The following optional keyword parameters are available:
 $FIELDS
 """
@@ -98,7 +97,7 @@ end
 
 function auto_hmc!(
         rng::AbstractRNG,
-        explorer::AutoMALA,
+        explorer::AutoHMC,
         target_log_potential,
         state::Vector,
         recorders,
@@ -106,7 +105,10 @@ function auto_hmc!(
         use_mh_accept_reject)
 
     dim = length(state)
+
     momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim)
+    start_momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim) # incremented between leapfrog steps
+    first_start_momentum = get_buffer(recorders.buffers, :am_momentum_buffer, dim) # incremented between leapfrog steps
     diag_precond = get_buffer(recorders.buffers, :am_ones_buffer, dim)
     build_preconditioner!(diag_precond, explorer.preconditioner, rng, explorer.estimated_target_std_deviations)
     start_state = get_buffer(recorders.buffers, :am_state_buffer, dim) # incremented between leapfrog steps
@@ -116,11 +118,13 @@ function auto_hmc!(
     n_refresh = explorer.base_n_refresh * ceil(Int, dim^explorer.exponent_n_refresh)
     for i in 1:n_refresh # each time do `n_leapfrog` steps
         randn!(rng, momentum) # refresh momentum
+        first_start_momentum .= momentum
         init_joint_log = log_joint(target_log_potential, state, momentum)
         @assert isfinite(init_joint_log) "AutoHMC can only be called on a configuration of positive density."
         final_joint_log = init_joint_log 
         for _ in 1:explorer.n_leapfrog
             start_state .= state # the 'start' is the beginning of this leapfrog step
+            start_momentum .= momentum 
 
             # Randomly pick a "reasonable" range of MH accept probabilities (in log-scale)
             a = rand(rng)
@@ -143,6 +147,8 @@ function auto_hmc!(
                 diag_precond,
                 state, momentum, proposed_step_size
             ) 
+
+            momentum .*= -1.0 # flip
             reversed_exponent =
                 auto_step_size(
                     target_log_potential,
@@ -150,12 +156,14 @@ function auto_hmc!(
                     state, momentum,
                     recorders, chain,
                     explorer.step_size, lower_bound, upper_bound)
+            momentum .*= -1.0
             if reversed_exponent == proposed_exponent
                 final_joint_log = log_joint(target_log_potential, state, momentum)
             else
                 # step size reversibility check not satisfied, so go back 
                 # to where you were at the beginning of the leapfrog step
                 state .= start_state
+                momentum .= start_momentum
             end
         end
         if use_mh_accept_reject # applies to the entire trajectory consisting of n_leapfrog steps
@@ -166,7 +174,7 @@ function auto_hmc!(
             else
                 # reject entire trajectory: go back to the *very first* start state
                 state .= first_start_state 
-                # no need to reset momentum as it will get resampled at beginning of the loop
+                momentum .= first_start_momentum
             end
         end
     end
