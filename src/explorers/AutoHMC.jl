@@ -118,7 +118,6 @@ function auto_hmc!(
 
     n_refresh = explorer.base_n_refresh * ceil(Int, dim^explorer.exponent_n_refresh)
     for i in 1:n_refresh # each time do `n_leapfrog` steps
-        # println(state) # debug
         randn!(rng, momentum) # refresh momentum
         first_start_momentum .= momentum
         init_joint_log = log_joint(target_log_potential, state, momentum)
