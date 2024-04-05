@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
-  
+
   # test using MPICH as MPI backend (default in MPI.jl)
   test-MPICH-jll:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -49,9 +49,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v3
-        with:
-          files: lcov.info
+
 
 
   # test OpenMPI by requesting it with MPIPreferences
@@ -92,9 +90,9 @@ jobs:
         rm("test/Manifest.toml")
 
     - uses: julia-actions/julia-runtest@latest
-  
 
-  # # CI is getting too slow! 
+
+  # # CI is getting too slow!
   # test system MPI using Brew in macOS
   # adapted from MPI.jl
   test-system-MPI-brew:
@@ -142,7 +140,7 @@ jobs:
           MPIPreferences.use_system_binary()
           run(`sed -i.bu 's/unknown/MPICH/' test/LocalPreferences.toml`) # fix wrong abi detection for mpich
           rm("test/Manifest.toml")
-      
+
       - uses: julia-actions/julia-runtest@v1
 
 

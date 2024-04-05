@@ -22,7 +22,7 @@ include("supporting/mpi_test_utils.jl")
                 @show is_stan = target isa Pigeons.StanLogPotential
 
                 # setting to true puts too much pressure on CI instances? https://github.com/Julia-Tempering/Pigeons.jl/actions/runs/5627897144/job/15251121621?pr=90
-                multithreaded = is_stan ? false : true
+                multithreaded = true #is_stan ? false : true
 
                 r = pigeons(;
                     target,
@@ -84,10 +84,10 @@ include("supporting/mpi_test_utils.jl")
             @test true
         end
     end
-    
+
     @testset "compare_checkpoints throws on distinct inputs" begin
         # test that `compare_checkpoints` errors on every pair of distinct results sets
-        # note: need to deserialize immutables for both sets of (incompatible) results 
+        # note: need to deserialize immutables for both sets of (incompatible) results
         for (a,b) in Iterators.product(results,results)
             if a != b
                 empty!(Pigeons.immutables)

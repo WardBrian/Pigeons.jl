@@ -33,7 +33,7 @@ function stan_threads_options()
         @warn """
               At the moment, for StanLogPotential please use a single thread
               (but several MPI processes can still be used).""" maxlog=1
-        # return ["STAN_THREADS=true"] # not so simple?..  see https://github.com/Julia-Tempering/Pigeons.jl/issues/92
+        return ["STAN_THREADS=true"] # not so simple?..  see https://github.com/Julia-Tempering/Pigeons.jl/issues/92
     end
     return Vector{String}()
 end
